@@ -124,6 +124,66 @@ function checkValidServiceWorker(swUrl, config) {
     });
 }
 
+window.addEventListener("beforeinstallprompt", ev => { 
+  
+});
+
+// function displayConfirmNotification() {
+//   var options = {
+//     body:'Welcome to AiK'
+//   };
+//   new Notification("Successfully", options);
+// }
+
+// function displayConfirmNotification() {
+//   if('serviceWorker' in navigator) {
+//     var options = {
+//            body:'Welcome to AK'
+//          };
+      
+//     navigator.serviceWorker.ready
+//     .then(function(swreg){
+//       swreg.showNotification('Success Sub',options)
+//     });
+//   }
+// }
+
+// notification sw
+function displayConfirmNotification() {
+  if('serviceWorker' in navigator) {
+  var options = {
+           body:'Aravind Kalidindi',
+           icon:'../src/maskable_icon_x96.png',
+           image:'../src/maskable_icon.png',
+           dir:'ltr',
+           lang:'en-US',
+           vibrate:[100,50,200],
+           badge:'../src/maskable_icon_x96.png',
+           tag:'confirm-notification',
+           renotify: true,
+           actions: [
+             {action:'confirm',title:'Okay',icon:'../src/maskable_icon_x96.png'},
+             {action:'cancel',title:'Cancel',icon:'../src/maskable_icon_x96.png'}
+           ]
+        };
+     
+    navigator.serviceWorker.ready
+    .then(function(swreg){
+      swreg.showNotification('Welcome to My Website',options)
+    });
+  }
+}
+
+Notification.requestPermission().then(function(permission) { console.log('permiss', permission)});
+
+
+//Allow Notification//
+Notification.requestPermission(status =>{
+  console.log('Notification Permission Status:',status);
+  configurePushSub();
+  //displayConfirmNotification();
+});
+
 export function unregister() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.ready
@@ -135,3 +195,90 @@ export function unregister() {
       });
   }
 }
+
+
+//notification event lisitiner
+// self.addEventListener('notificationclick',function(event){
+//   var notification = event.notification;
+  
+//   var action = event.action;
+  
+//   console.log(notification);
+
+//   if(action === 'confirm'){
+//     console.log('confirm was chosen');
+//     notification.close();
+
+//   }
+//   else{
+//     console.log(action);
+//      notification.close();
+//   }
+  
+
+// });
+
+//push notification
+function configurePushSub() {
+  if(!('serviceWorker' in navigator)){
+    return;
+  }
+
+  var reg;
+  navigator.serviceWorker.ready
+    .then(function(swreg){
+      reg=swreg;
+      swreg.pushManager.getSubscription();
+    })
+    .then(function(sub){
+      if(sub == null){
+        //create a new one
+        var vapidPublicKey = 'BEat5sBtgg6crlOJDJyrgWNxyyXKsFytBwnzRvlpIkz4Mup4a1naIyccKqsAuIgLjA_KQ5ZfS6vXXC0aODeiDDc';
+        var convertedVapidPublicKey = urlBase64ToUint8Array(vapidPublicKey);
+        return reg.pushManager.subscribe({
+          userVisibleOnly : true,
+          applicationServerKey:convertedVapidPublicKey
+        });
+       
+      }
+      else{
+        //we have a subscription
+      }
+
+    })
+    .then(function(newSub){
+      fetch('https://portfolio-acf82-default-rtdb.asia-southeast1.firebasedatabase.app/subscriptions.json',{
+        method: 'POST',
+        headers:{
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(newSub)
+      })
+    })
+    .then(function(res){
+      if (res.ok) {
+      displayConfirmNotification();
+      }
+    })
+    .catch(function(err) {
+      console.log(err);
+    });
+}
+  
+
+    function urlBase64ToUint8Array(base64String) {
+      var padding = '='.repeat((4 - base64String.length % 4) % 4);
+      var base64 = (base64String + padding)
+          .replace(/\-/g, '+')
+          .replace(/_/g, '/');
+  
+      var rawData = window.atob(base64);
+      var outputArray = new Uint8Array(rawData.length);
+  
+      for (var i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+  }
+
